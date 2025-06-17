@@ -11,8 +11,7 @@ add_workspace_library(MockupLib SHARED ${sources} PRECOMPILED_HEADER src/Madgine
 
 target_link_libraries(MockupLib PUBLIC NetworkSerialize FirstParty)
 
-install_to_workspace(MockupLib TARGETS MockupLib EXPORT_LIB)
-export_to_workspace(MockupLib)
+install_to_workspace(MockupLib TARGETS MockupLib)
 
 
 set(sources "")

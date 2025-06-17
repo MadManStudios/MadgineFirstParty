@@ -76,5 +76,3 @@ namespace FirstParty {
 
 }
 }
-
-REGISTER_TYPE(Engine::FirstParty::MockupServices)

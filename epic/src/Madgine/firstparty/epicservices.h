@@ -93,5 +93,3 @@ namespace FirstParty {
 
 }
 }
-
-REGISTER_TYPE(Engine::FirstParty::EpicServices)
