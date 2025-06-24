@@ -16,7 +16,7 @@
 
 #include "Modules/threading/awaitables/awaitablesender.h"
 
-#include "playservices/playservices.h"
+#include "playservices.h"
 
 #include "Generic/execution/execution.h"
 
@@ -31,7 +31,8 @@ namespace FirstParty {
     GooglePlayServices::GooglePlayServices(Root::Root &root)
         : FirstPartyServicesImpl<GooglePlayServices>(root)
     {
-        mInitialized = PlayServices::setup();        
+        PlayServices::setup();        
+        mInitialized = true;
     }
 
     GooglePlayServices::~GooglePlayServices()
@@ -43,15 +44,19 @@ namespace FirstParty {
         return "GooglePlayServices";
     }
 
+    std::string GooglePlayServices::currentUserName() const
+    {
+        throw 0;
+    }
+
     Threading::Task<Leaderboard> GooglePlayServices::getLeaderboardTask(const char *name, Leaderboard::AccessMode accessmode, Leaderboard::ReferenceRank referenceRank, int32_t rangeBegin, int32_t rangeEnd)
     {
-        WithResult<std::string, PlayServices::Leaderboards::Scores> result = co_await PlayServices::Leaderboards::getLeaderboard(name, accessmode, referenceRank, rangeBegin, rangeEnd);
-        PlayServices::Leaderboards::Scores scores;
-        std::string errorMsg = result.get(scores);
-        if (!errorMsg.empty()) {
-            LOG_ERROR("Error fetching Leaderboard " << name << ": \n "
-                                             << errorMsg);            
-        }
+        PlayServices::Leaderboards::Scores scores = (co_await PlayServices::Leaderboards::getLeaderboard(name, accessmode, referenceRank, rangeBegin, rangeEnd)).value();
+        
+        //if (!errorMsg.empty()) {
+        //    LOG_ERROR("Error fetching Leaderboard " << name << ": \n "
+        //                                     << errorMsg);            
+        //}
         Leaderboard transferredScores;
 
         std::ranges::transform(scores.mScores, std::back_inserter(transferredScores.mEntries), [](const PlayServices::Leaderboards::Scores::Score &score) {
@@ -68,26 +73,61 @@ namespace FirstParty {
 
     Threading::Task<bool> GooglePlayServices::ingestStatTask(const char *name, const char *leaderboardName, int32_t value)
     {
-        std::optional<std::string> result = co_await PlayServices::Leaderboards::submitScore(leaderboardName, value, name); 
-        if (result) {
-            LOG_ERROR("Error updating Stat " << name << " in Leaderboard " << leaderboardName << ": \n "
-                << *result);
-            co_return false;
-        } 
-        co_return false;
+        (co_await PlayServices::Leaderboards::submitScore(leaderboardName, value, name)).value(); 
+        //if (result) {
+        //    LOG_ERROR("Error updating Stat " << name << " in Leaderboard " << leaderboardName << ": \n "
+        //        << *result);
+        //    co_return false;
+        //} 
+        co_return true;
     }
 
     Threading::Task<bool> GooglePlayServices::unlockAchievementTask(const char *name)
     {
-        std::optional<std::string> result = co_await PlayServices::Achievements::unlock(name);
-        if (result) {
-            LOG_ERROR("Error unlocking Achievement: \n" << *result);
-            co_return false;
-        } 
+        (co_await PlayServices::Achievements::unlock(name)).value();
+        //if (result) {
+        //    LOG_ERROR("Error unlocking Achievement: \n" << *result);
+        //    co_return false;
+        //} 
         co_return true;
     }
 
     Threading::Task<std::vector<Lobby>> GooglePlayServices::getLobbyListTask()
+    {
+        throw 0;
+    }
+
+    Threading::Task<std::optional<Lobby>> GooglePlayServices::createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties)
+    {
+        throw 0;
+    }
+
+    Threading::Task<std::optional<Lobby>> GooglePlayServices::joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb)
+    {
+        throw 0;
+    }
+
+    Threading::Task<std::optional<ServerInfo>> GooglePlayServices::startMatchTask()
+    {
+        throw 0;
+    }
+
+    void GooglePlayServices::leaveLobby()
+    {
+        throw 0;
+    }
+
+    void GooglePlayServices::leaveMatch()
+    {
+        throw 0;
+    }
+
+    bool GooglePlayServices::isLobbyOwner() const
+    {
+        throw 0;
+    }
+
+    void GooglePlayServices::setLobbyProperty(std::string_view key, std::string_view value)
     {
         throw 0;
     }

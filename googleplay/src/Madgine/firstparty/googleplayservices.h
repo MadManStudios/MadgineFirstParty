@@ -16,6 +16,10 @@ namespace FirstParty {
 
         virtual std::string_view key() const override;
 
+        ///////// IDENTITY
+
+        std::string currentUserName() const override;
+
         ////////// LEADERBOARD
 
         virtual Threading::Task<Leaderboard> getLeaderboardTask(const char *name, Leaderboard::AccessMode accessmode, Leaderboard::ReferenceRank referenceRank, int32_t rangeBegin, int32_t rangeEnd) override;
@@ -30,17 +34,22 @@ namespace FirstParty {
 
         /////////// MATCHMAKING
 
-        virtual Threading::Task<std::vector<Lobby>> getLobbyListTask() override;
-        virtual Threading::Task<std::optional<Lobby>> createLobbyTask(MatchmakingCallback cb) override;
-        virtual Threading::Task<std::optional<Lobby>> joinLobbyTask(uint64_t id, MatchmakingCallback cb) override;
-        virtual Threading::Task<bool> startMatchTask() override;
-        virtual void leaveLobby() override;
-        virtual Threading::Task<std::optional<LobbyInfo>> getCurrentLobbyInfoTask() override;
+        Threading::Task<std::vector<Lobby>> getLobbyListTask() override;
+        Threading::Task<std::optional<Lobby>> createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties) override;
+        Threading::Task<std::optional<Lobby>> joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb) override;
+        Threading::Task<std::optional<ServerInfo>> startMatchTask() override;
+        void leaveLobby() override;
+        void leaveMatch() override;
+        bool isLobbyOwner() const override;
+
+        void setLobbyProperty(std::string_view key, std::string_view value) override;
+
+        MatchmakingCallback mCurrentMatchmakingCallback;
+        SessionStartedCallback mSessionStartedCallback;
+
 
         //////////////////        
     };
 
 }
 }
-
-REGISTER_TYPE(Engine::FirstParty::GooglePlayServices)
