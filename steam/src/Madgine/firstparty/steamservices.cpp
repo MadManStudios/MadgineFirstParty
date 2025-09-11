@@ -30,7 +30,7 @@ namespace FirstParty {
         : FirstPartyServicesImpl<SteamServices>(root)
         , mSyncManager("SteamP2P")
     {
-        if (SteamAPI_RestartAppIfNecessary(STEAM_APP_ID)) {
+        if (!root.toolMode() && SteamAPI_RestartAppIfNecessary(STEAM_APP_ID)) {
             mErrorCode = -1;
             return;
         }
