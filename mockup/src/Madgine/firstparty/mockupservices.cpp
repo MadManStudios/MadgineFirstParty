@@ -110,6 +110,8 @@ namespace FirstParty {
             mSessionStartedCallback = std::move(sessionCb);
         }
 
+        mLobbyOwner = true;
+
         co_return lobby;
     }
 
@@ -121,6 +123,8 @@ namespace FirstParty {
             mCurrentMatchmakingCallback = std::move(cb);
             mSessionStartedCallback = std::move(sessionCb);
         }
+
+        mLobbyOwner = false;
 
         co_return lobby;
     }
@@ -153,6 +157,7 @@ namespace FirstParty {
 
     void MockupServices::leaveLobby()
     {
+        mLobbyOwner = false;
         mState.leaveLobby();
     }
 
@@ -165,7 +170,7 @@ namespace FirstParty {
 
     bool MockupServices::isLobbyOwner() const
     {
-        return true;
+        return mLobbyOwner;
     }
 
     void MockupServices::setLobbyProperty(std::string_view key, std::string_view value)

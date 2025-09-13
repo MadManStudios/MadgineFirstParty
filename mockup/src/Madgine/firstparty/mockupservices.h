@@ -67,6 +67,7 @@ namespace FirstParty {
         MatchmakingCallback mCurrentMatchmakingCallback;
         SessionStartedCallback mSessionStartedCallback;  
         
+        bool mLobbyOwner = false;
 
         //////////////////
 
