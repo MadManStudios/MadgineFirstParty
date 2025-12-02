@@ -34,12 +34,11 @@ namespace FirstParty {
 
     static void sLogCallback(const EOS_LogMessage *msg)
     {
-        if (msg->Level == EOS_ELogLevel::EOS_LOG_Off)
-            return;
-
         Log::MessageType type;
         switch (msg->Level) {
         case EOS_ELogLevel::EOS_LOG_Fatal:
+            type = Log::MessageType::FATAL_TYPE;
+            break;
         case EOS_ELogLevel::EOS_LOG_Error:
             type = Log::MessageType::ERROR_TYPE;
             break;
@@ -53,6 +52,8 @@ namespace FirstParty {
         case EOS_ELogLevel::EOS_LOG_VeryVerbose:
             type = Log::MessageType::DEBUG_TYPE;
             break;
+        case EOS_ELogLevel::EOS_LOG_OFF:
+            return;
         default:
             throw 0;
         }

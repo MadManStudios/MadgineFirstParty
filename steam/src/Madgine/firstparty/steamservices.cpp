@@ -52,6 +52,9 @@ namespace FirstParty {
     {
         mSyncManager.disconnect();
 
+        if (mCurrentLobby.IsValid())
+            leaveLobby();
+
         SteamAPI_Shutdown();
     }
 

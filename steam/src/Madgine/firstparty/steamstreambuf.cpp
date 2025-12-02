@@ -3,175 +3,174 @@
 #include "steamstreambuf.h"
 
 namespace Engine {
-namespace FirstParty {
+	namespace FirstParty {
 
-    SteamStreambuf::SteamStreambuf(HSteamNetConnection con)
-        : mConnection(con)
-    {
-    }
+		SteamStreambuf::SteamStreambuf(HSteamNetConnection con)
+			: mConnection(con)
+		{
+		}
 
-    SteamStreambuf::~SteamStreambuf()
-    {
-        SteamNetworkingSockets()->CloseConnection(mConnection, 0, nullptr, true);
-    }
+		SteamStreambuf::~SteamStreambuf()
+		{
+			SteamNetworkingSockets()->CloseConnection(mConnection, 0, nullptr, true);
+		}
 
-    void SteamStreambuf::beginMessageWriteImpl()
-    {
-        assert(mSendBufferSize == 0);
-        extend();
-    }
+		void SteamStreambuf::beginMessageWriteImpl()
+		{
+			assert(mSendBufferSize == 0);
 
-    Serialize::MessageId SteamStreambuf::endMessageWriteImpl()
-    {
-        assert(mSendBufferSize != 0);
+			mSendBufferSize = 128;
+			mSendBuffer = std::make_unique<char[]>(mSendBufferSize);
+			setp(mSendBuffer.get(), mSendBuffer.get() + mSendBufferSize);
+			pbump(sizeof(SteamMessageHeader));
+		}
 
-        Serialize::MessageId id = ++mRunningMessageId;
+		Serialize::MessageId SteamStreambuf::endMessageWriteImpl()
+		{
+			assert(mSendBufferSize != 0);
 
-        SteamMessageHeader *header = reinterpret_cast<SteamMessageHeader *>(mSendBuffer.get());
-        header->mMessageId = id;
+			Serialize::MessageId id = ++mRunningMessageId;
 
-        SteamMessagePtr message { SteamNetworkingUtils()->AllocateMessage(0) };
-        message->m_pData = mSendBuffer.release();
-        mSendBufferSize = 0;
-        message->m_cbSize = pptr() - pbase();
-        message->m_conn = mConnection;
-        message->m_nFlags = k_nSteamNetworkingSend_Reliable;
+			SteamMessageHeader* header = reinterpret_cast<SteamMessageHeader*>(mSendBuffer.get());
+			header->mMessageId = id;
 
-        message->m_pfnFreeData = [](SteamNetworkingMessage_t *message) { delete[] static_cast<char*>(message->m_pData); };
+			SteamMessagePtr message{ SteamNetworkingUtils()->AllocateMessage(0) };
+			message->m_pData = mSendBuffer.release();
+			mSendBufferSize = 0;
+			message->m_cbSize = pptr() - pbase();
+			message->m_conn = mConnection;
+			message->m_nFlags = k_nSteamNetworkingSend_Reliable;
 
-        mSendMessages.emplace_back(std::move(message));
+			message->m_pfnFreeData = [](SteamNetworkingMessage_t* message) { delete[] static_cast<char*>(message->m_pData); };
 
-        return id;
-    }
+			mSendMessages.emplace_back(std::move(message));
 
-    Serialize::MessageId SteamStreambuf::beginMessageReadImpl()
-    {
-        if (!mReceivingMessage)
-            return 0;
+			return id;
+		}
 
-        char *data = static_cast<char *>(mReceivingMessage->m_pData);
-        setg(data + sizeof(SteamMessageHeader), data + sizeof(SteamMessageHeader), data + mReceivingMessage->m_cbSize);
+		Serialize::MessageId SteamStreambuf::beginMessageReadImpl()
+		{
+			if (!mReceivingMessage)
+				return 0;
 
-        SteamMessageHeader *header = reinterpret_cast<SteamMessageHeader *>(data);
+			char* data = static_cast<char*>(mReceivingMessage->m_pData);
+			setg(data + sizeof(SteamMessageHeader), data + sizeof(SteamMessageHeader), data + mReceivingMessage->m_cbSize);
 
-        return header->mMessageId;
-    }
+			SteamMessageHeader* header = reinterpret_cast<SteamMessageHeader*>(data);
 
-    std::streamsize SteamStreambuf::endMessageReadImpl()
-    {
-        mReceivingMessage.reset();
-        return message_streambuf::endMessageReadImpl();
-    }
+			return header->mMessageId;
+		}
 
-    SteamStreambuf::pos_type SteamStreambuf::seekoff(off_type off, std::ios_base::seekdir dir,
-        std::ios_base::openmode mode)
-    {
-        if (mode & std::ios_base::in) {
-            switch (dir) {
-            case std::ios_base::beg:
-                if (0 <= off && eback() + off <= egptr()) {
-                    setg(eback(), eback() + off, egptr());
-                    return pos_type(off);
-                }
-                break;
-            case std::ios_base::cur:
-                if (eback() <= gptr() + off && gptr() + off <= egptr()) {
-                    setg(eback(), gptr() + off, egptr());
-                    return pos_type(gptr() - eback());
-                }
-                break;
-            case std::ios_base::end:
-                if (eback() <= egptr() + off && off <= 0) {
-                    setg(eback(), egptr() + off, egptr());
-                    return pos_type(gptr() - eback());
-                }
-            }
-        }
+		std::streamsize SteamStreambuf::endMessageReadImpl()
+		{
+			mReceivingMessage.reset();
+			return message_streambuf::endMessageReadImpl();
+		}
 
-        return pos_type(off_type(-1));
-    }
+		SteamStreambuf::pos_type SteamStreambuf::seekoff(off_type off, std::ios_base::seekdir dir,
+			std::ios_base::openmode mode)
+		{
+			if (mode & std::ios_base::in) {
+				switch (dir) {
+				case std::ios_base::beg:
+					if (0 <= off && eback() + off <= egptr()) {
+						setg(eback(), eback() + off, egptr());
+						return pos_type(off);
+					}
+					break;
+				case std::ios_base::cur:
+					if (eback() <= gptr() + off && gptr() + off <= egptr()) {
+						setg(eback(), gptr() + off, egptr());
+						return pos_type(gptr() - eback());
+					}
+					break;
+				case std::ios_base::end:
+					if (eback() <= egptr() + off && off <= 0) {
+						setg(eback(), egptr() + off, egptr());
+						return pos_type(gptr() - eback());
+					}
+				}
+			}
 
-    SteamStreambuf::pos_type SteamStreambuf::seekpos(pos_type pos, std::ios_base::openmode mode)
-    {
-        if (0 <= pos && eback() + pos <= egptr()) {
-            setg(eback(), eback() + pos, egptr());
-            return pos;
-        }
-        return pos_type(off_type(-1));
-    }
+			return pos_type(off_type(-1));
+		}
 
-    void SteamStreambuf::extend()
-    {
-        if (mSendBufferSize == 0) {
-            mSendBufferSize = 128;
-            mSendBuffer = std::make_unique<char[]>(mSendBufferSize);
-            setp(mSendBuffer.get(), mSendBuffer.get() + mSendBufferSize);
-            pbump(sizeof(SteamMessageHeader));
-        } else {
-            size_t index = pptr() - pbase();
-            std::unique_ptr<char[]> newBuffer = std::make_unique<char[]>(2 * mSendBufferSize);
-            std::memcpy(newBuffer.get(), mSendBuffer.get(), index);
-            mSendBuffer = std::move(newBuffer);
-            mSendBufferSize = 2 * mSendBufferSize;
-            setp(mSendBuffer.get(), mSendBuffer.get() + mSendBufferSize);
-            pbump(static_cast<int>(index));
-        }
-    }
+		SteamStreambuf::pos_type SteamStreambuf::seekpos(pos_type pos, std::ios_base::openmode mode)
+		{
+			if (0 <= pos && eback() + pos <= egptr()) {
+				setg(eback(), eback() + pos, egptr());
+				return pos;
+			}
+			return pos_type(off_type(-1));
+		}
 
-    Serialize::StreamResult SteamStreambuf::receiveMessages()
-    {
-        if (!mReceivingMessage) {
-            int result = SteamNetworkingSockets()->ReceiveMessagesOnConnection(mConnection, &mReceivingMessage, 1);
-            if (result < 0)
-                throw 0;
-        }
+		void SteamStreambuf::extend()
+		{
+			assert(mSendBufferSize > 0);
 
-        return {};
-    }
+			size_t index = pptr() - pbase();
+			std::unique_ptr<char[]> newBuffer = std::make_unique<char[]>(2 * mSendBufferSize);
+			std::memcpy(newBuffer.get(), mSendBuffer.get(), index);
+			mSendBuffer = std::move(newBuffer);
+			mSendBufferSize = 2 * mSendBufferSize;
+			setp(mSendBuffer.get(), mSendBuffer.get() + mSendBufferSize);
+			pbump(static_cast<int>(index));
+		}
 
-    Serialize::StreamResult SteamStreambuf::sendMessages()
-    {
-        size_t count = mSendMessages.size();
+		Serialize::StreamResult SteamStreambuf::receiveMessages()
+		{
+			if (!mReceivingMessage) {
+				int result = SteamNetworkingSockets()->ReceiveMessagesOnConnection(mConnection, &mReceivingMessage, 1);
+				if (result < 0)
+					throw 0;
+			}
 
-        Serialize::StreamResult result;
+			return {};
+		}
 
-        if (count > 0) {
-            int64_t messageNumbers[64];
+		Serialize::StreamResult SteamStreambuf::sendMessages()
+		{
+			size_t count = mSendMessages.size();
 
-            assert(count < 64);
+			Serialize::StreamResult result;
 
-            SteamNetworkingSockets()->SendMessages(count, &std::as_const(mSendMessages)[0], messageNumbers);
+			if (count > 0) {
+				int64_t messageNumbers[64];
 
-            for (size_t i = 0; i < count; ++i)
-                if (messageNumbers[i] <= 0)
-                    switch (-messageNumbers[i]) {
-                    case k_EResultNoConnection:
-                        result = std::move(STREAM_CONNECTION_LOST_ERROR());
-                        break;
-                    default:
-                        throw 0;
-                    }
-                    
+				assert(count < 64);
 
-            for (SteamMessagePtr &msg : mSendMessages)
-                msg.release();
+				SteamNetworkingSockets()->SendMessages(count, &std::as_const(mSendMessages)[0], messageNumbers);
 
-            mSendMessages.clear();
-        }
+				for (size_t i = 0; i < count; ++i)
+					if (messageNumbers[i] <= 0)
+						switch (-messageNumbers[i]) {
+						case k_EResultNoConnection:
+							result = std::move(STREAM_CONNECTION_LOST_ERROR());
+							break;
+						default:
+							throw 0;
+						}
 
-        return result;
-    }
 
-    SteamStreambuf::int_type SteamStreambuf::overflow(int c)
-    {
-        if (c != EOF) {
-            extend();
-            *pptr() = c;
-            pbump(1);
-            return c;
-        }
-        return traits_type::eof();
-    }
+				for (SteamMessagePtr& msg : mSendMessages)
+					msg.release();
 
-}
+				mSendMessages.clear();
+			}
+
+			return result;
+		}
+
+		SteamStreambuf::int_type SteamStreambuf::overflow(int c)
+		{
+			if (c != EOF) {
+				extend();
+				*pptr() = c;
+				pbump(1);
+				return c;
+			}
+			return traits_type::eof();
+		}
+
+	}
 }
