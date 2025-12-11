@@ -113,6 +113,8 @@ namespace FirstParty {
             entry.mDisplayName = SteamFriends()->GetFriendPersonaName(leaderboardEntry.m_steamIDUser);
         }
 
+		result.mTotalEntries = SteamUserStats()->GetLeaderboardEntryCount(leaderboard.m_hSteamLeaderboard);
+
         co_return result;
     }
 

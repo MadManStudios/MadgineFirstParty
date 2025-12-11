@@ -33,6 +33,7 @@ namespace FirstParty {
         };
 
         std::vector<Entry> mEntries;
+        size_t mTotalEntries;
     };
 
     struct Lobby {

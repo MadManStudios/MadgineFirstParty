@@ -52,7 +52,7 @@ namespace FirstParty {
         case EOS_ELogLevel::EOS_LOG_VeryVerbose:
             type = Log::MessageType::DEBUG_TYPE;
             break;
-        case EOS_ELogLevel::EOS_LOG_OFF:
+        case EOS_ELogLevel::EOS_LOG_Off:
             return;
         default:
             throw 0;

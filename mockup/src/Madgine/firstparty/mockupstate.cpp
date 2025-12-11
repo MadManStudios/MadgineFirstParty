@@ -7,6 +7,8 @@
 
 #include "Modules/threading/awaitables/awaitablesender.h"
 
+#include "Generic/execution/execution.h"
+
 SERIALIZETABLE_BEGIN(Engine::FirstParty::Lobby)
 FIELD(mId)
 FIELD(mProperties)
@@ -45,127 +47,127 @@ SYNCFUNCTION(sendServerAddressImpl)
 SERIALIZETABLE_END(Engine::FirstParty::MockupState)
 
 namespace Engine {
-namespace FirstParty {
+	namespace FirstParty {
 
-    MockupState::MockupState()
-    {
-        Execution::sync_expect(mNetwork.addTopLevelItem(this, "State"));
-    }
+		MockupState::MockupState()
+		{
+			Execution::sync_expect(mNetwork.addTopLevelItem(this, "State"));
+		}
 
-    void MockupState::update()
-    {
-        mNetwork.sendAndReceiveMessages();
-    }
+		void MockupState::update()
+		{
+			mNetwork.sendAndReceiveMessages();
+		}
 
-    std::vector<Lobby> MockupState::getLobbyListImpl()
-    {
-        throw 0;
-    }
+		std::vector<Lobby> MockupState::getLobbyListImpl()
+		{
+			throw 0;
+		}
 
-    SessionInfo MockupState::startMatchImpl(Serialize::SyncFunctionContext context)
-    {
-        throw 0;
-    }
+		SessionInfo MockupState::startMatchImpl(Serialize::SyncFunctionContext context)
+		{
+			throw 0;
+		}
 
-    std::optional<Lobby> MockupState::joinLobbyImpl(Serialize::SyncFunctionContext context, uint64_t lobbyId)
-    {
-        throw 0;
-    }
+		std::optional<Lobby> MockupState::joinLobbyImpl(Serialize::SyncFunctionContext context, uint64_t lobbyId)
+		{
+			throw 0;
+		}
 
-    std::optional<Lobby> MockupState::createLobbyImpl(Serialize::SyncFunctionContext context, size_t maxPlayerCount, std::map<std::string, std::string> properties)
-    {
-        throw 0;
-    }
+		std::optional<Lobby> MockupState::createLobbyImpl(Serialize::SyncFunctionContext context, size_t maxPlayerCount, std::map<std::string, std::string> properties)
+		{
+			throw 0;
+		}
 
-    bool MockupState::unlockAchievementImpl(Serialize::SyncFunctionContext context, std::string_view name)
-    {
-        throw 0;
-    }
+		bool MockupState::unlockAchievementImpl(Serialize::SyncFunctionContext context, std::string_view name)
+		{
+			throw 0;
+		}
 
-    bool MockupState::ingestStatImpl(Serialize::SyncFunctionContext context, std::string_view name, std::string_view leaderboardName, int32_t value)
-    {
-        throw 0;
-    }
+		bool MockupState::ingestStatImpl(Serialize::SyncFunctionContext context, std::string_view name, std::string_view leaderboardName, int32_t value)
+		{
+			throw 0;
+		}
 
-    void MockupState::setLobbyPropertyImpl(Serialize::SyncFunctionContext context, std::string_view key, std::string_view value)
-    {
-        throw 0;
-    }
+		void MockupState::setLobbyPropertyImpl(Serialize::SyncFunctionContext context, std::string_view key, std::string_view value)
+		{
+			throw 0;
+		}
 
-    void MockupState::leaveLobbyImpl(Serialize::SyncFunctionContext context)
-    {
-        throw 0;
-    }
+		void MockupState::leaveLobbyImpl(Serialize::SyncFunctionContext context)
+		{
+			throw 0;
+		}
 
-    void MockupState::leaveMatchImpl(Serialize::SyncFunctionContext context)
-    {
-        throw 0;
-    }
+		void MockupState::leaveMatchImpl(Serialize::SyncFunctionContext context)
+		{
+			throw 0;
+		}
 
-    void MockupState::updateLobbyInfoImpl(LobbyInfo info)
-    {
-        throw 0;
-    }
+		void MockupState::updateLobbyInfoImpl(LobbyInfo info)
+		{
+			throw 0;
+		}
 
-    void MockupState::sendServerAddressImpl(SocketAddress address, SessionInfo session)
-    {
-        throw 0;
-    }
+		void MockupState::sendServerAddressImpl(SocketAddress address, SessionInfo session)
+		{
+			throw 0;
+		}
 
-    Threading::Task<std::vector<Lobby>> MockupState::getLobbyList()
-    {
-        co_return (co_await query<&MockupState::getLobbyListImpl>()).value();
-    }
+		Threading::Task<std::vector<Lobby>> MockupState::getLobbyList()
+		{
+			co_return (co_await query<&MockupState::getLobbyListImpl>()).value();
+		}
 
-    Threading::Task<SessionInfo> MockupState::startMatch()
-    {
-        co_return (co_await query<&MockupState::startMatchImpl>()).value();
-    }
+		Threading::Task<SessionInfo> MockupState::startMatch()
+		{
+			co_return (co_await query<&MockupState::startMatchImpl>()).value();
+		}
 
-    Threading::Task<std::optional<Lobby>> MockupState::joinLobby(uint64_t id)
-    {
-        co_return (co_await query<&MockupState::joinLobbyImpl>(id)).value();
-    }
+		Threading::Task<std::optional<Lobby>> MockupState::joinLobby(uint64_t id)
+		{
+			co_return (co_await query<&MockupState::joinLobbyImpl>(id)).value();
+		}
 
-    Threading::Task<std::optional<Lobby>> MockupState::createLobby(size_t maxPlayerCount, std::map<std::string, std::string> properties)
-    {
-        co_return (co_await query<&MockupState::createLobbyImpl>(maxPlayerCount, properties)).value();
-    }
+		Threading::Task<std::optional<Lobby>> MockupState::createLobby(size_t maxPlayerCount, std::map<std::string, std::string> properties)
+		{
+			co_return (co_await query<&MockupState::createLobbyImpl>(maxPlayerCount, properties)).value();
+		}
 
-    Threading::Task<bool> MockupState::unlockAchievement(std::string_view name)
-    {
-        co_return (co_await query<&MockupState::unlockAchievementImpl>(name)).value();
-    }
+		Threading::Task<bool> MockupState::unlockAchievement(std::string_view name)
+		{
+			co_return (co_await query<&MockupState::unlockAchievementImpl>(name)).value();
+		}
 
-    Threading::Task<bool> MockupState::ingestStat(std::string_view name, std::string_view leaderboardName, int32_t value)
-    {
-        co_return (co_await query<&MockupState::ingestStatImpl>(name, leaderboardName, value)).value();
-    }
+		Threading::Task<bool> MockupState::ingestStat(std::string_view name, std::string_view leaderboardName, int32_t value)
+		{
+			co_return (co_await query<&MockupState::ingestStatImpl>(name, leaderboardName, value)).value();
+		}
 
-    void MockupState::setLobbyProperty(std::string_view key, std::string_view value)
-    {
-        command<&MockupState::setLobbyPropertyImpl>(key, value);
-    }
+		void MockupState::setLobbyProperty(std::string_view key, std::string_view value)
+		{
+			command<&MockupState::setLobbyPropertyImpl>(key, value);
+		}
 
-    void MockupState::leaveLobby()
-    {
-        command<&MockupState::leaveLobbyImpl>();
-    }
+		void MockupState::leaveLobby()
+		{
+			command<&MockupState::leaveLobbyImpl>();
+		}
 
-    void MockupState::leaveMatch()
-    {
-        command<&MockupState::leaveMatchImpl>();
-    }
+		void MockupState::leaveMatch()
+		{
+			command<&MockupState::leaveMatchImpl>();
+		}
 
-    void MockupState::updateLobbyInfo(const std::set<Serialize::ParticipantId> &targets, LobbyInfo info)
-    {
-        notify_some<&MockupState::updateLobbyInfoImpl>(targets, std::move(info));
-    }
+		void MockupState::updateLobbyInfo(const std::set<Serialize::ParticipantId>& targets, LobbyInfo info)
+		{
+			notify_some<&MockupState::updateLobbyInfoImpl>(targets, std::move(info));
+		}
 
-    void MockupState::sendServerAddress(const std::set<Serialize::ParticipantId> &targets, SocketAddress address, SessionInfo session)
-    {
-        notify_some<&MockupState::sendServerAddressImpl>(targets, std::move(address), std::move(session));
-    }
+		void MockupState::sendServerAddress(const std::set<Serialize::ParticipantId>& targets, SocketAddress address, SessionInfo session)
+		{
+			notify_some<&MockupState::sendServerAddressImpl>(targets, std::move(address), std::move(session));
+		}
 
-}
+	}
 }
