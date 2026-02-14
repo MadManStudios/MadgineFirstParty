@@ -115,6 +115,7 @@ namespace FirstParty {
         {
             auto &[id, lobby] = *findLobby(context.mCallerId);
             lobby.mProperties[std::string { key }] = value;
+			LOG("Setting lobby property \"" << key << "\" to \"" << value << "\" for lobby " << id);
             updateLobbyInfo(lobby.mMembers, lobby);
         }
 
