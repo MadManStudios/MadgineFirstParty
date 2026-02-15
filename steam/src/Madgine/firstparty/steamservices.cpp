@@ -45,6 +45,8 @@ namespace Engine {
 					mSyncManager.sendAndReceiveMessages();
 					co_await 10ms;
 				}
+				leaveLobby();
+				mLobbyInfo.set(std::nullopt);
 				});
 		}
 
@@ -144,8 +146,12 @@ namespace Engine {
 			co_return SteamUserStats()->StoreStats();
 		}
 
-		Threading::Task<std::vector<Lobby>> SteamServices::getLobbyListTask()
+		Threading::Task<std::vector<Lobby>> SteamServices::getLobbyListTask(std::map<std::string, std::string> filters)
 		{
+			for (const auto& [key, value] : filters) {
+				SteamMatchmaking()->AddRequestLobbyListStringFilter(key.c_str(), value.c_str(), k_ELobbyComparisonEqual);
+			}
+
 			LobbyMatchList_t result = (co_await steam_sender<LobbyMatchList_t>(SteamMatchmaking()->RequestLobbyList())).value();
 
 			std::vector<Lobby> lobbies;
@@ -161,7 +167,7 @@ namespace Engine {
 			co_return std::move(lobbies);
 		}
 
-		Threading::Task<std::optional<LobbyInfo>> SteamServices::createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties)
+		Threading::Task<std::optional<LobbyInfo>> SteamServices::createLobbyTask(size_t maxPlayerCount, std::map<std::string, std::string> properties)
 		{
 			assert(!mCurrentLobby.IsValid());
 
@@ -172,8 +178,6 @@ namespace Engine {
 				co_return{};
 			}
 
-			mCurrentMatchmakingCallback = std::move(cb);
-			mSessionStartedCallback = std::move(sessionCb);
 			mCurrentLobby.SetFromUint64(result.m_ulSteamIDLobby);
 
 			for (const auto& [key, value] : properties)
@@ -182,7 +186,7 @@ namespace Engine {
 			co_return updateLobbyInfo();
 		}
 
-		Threading::Task<std::optional<LobbyInfo>> SteamServices::joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb)
+		Threading::Task<std::optional<LobbyInfo>> SteamServices::joinLobbyTask(uint64_t id)
 		{
 			assert(!mCurrentLobby.IsValid());
 
@@ -193,8 +197,6 @@ namespace Engine {
 				co_return{};
 			}
 
-			mCurrentMatchmakingCallback = std::move(cb);
-			mSessionStartedCallback = std::move(sessionCb);
 			mCurrentLobby.SetFromUint64(result.m_ulSteamIDLobby);
 
 			co_return updateLobbyInfo();

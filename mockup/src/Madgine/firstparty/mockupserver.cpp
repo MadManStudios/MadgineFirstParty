@@ -14,148 +14,160 @@
 using namespace Engine;
 
 namespace Engine {
-namespace FirstParty {
+	namespace FirstParty {
 
-    struct ServerState : MockupState {
+		struct ServerState : MockupState {
 
-        void update()
-        {
-            mNetwork.acceptConnections(Serialize::Formats::xml);
-            MockupState::update();
-        }
+			void update()
+			{
+				mNetwork.acceptConnections(Serialize::Formats::xml);
+				MockupState::update();
+			}
 
-        Network::NetworkManagerResult startServer(int port)
-        {
-            return mNetwork.startServer(port);
-        }
+			Network::NetworkManagerResult startServer(int port)
+			{
+				return mNetwork.startServer(port);
+			}
 
-        struct MockupLobby {
-            operator LobbyInfo() const
-            {
-                auto members = mMembers | std::views::transform(LIFT(std::to_string));
-                return {
-                    false,
-                    { members.begin(), members.end() },
-                    mProperties
-                };
-            }
+			struct MockupLobby {
+				operator LobbyInfo() const
+				{
+					auto members = mMembers | std::views::transform(LIFT(std::to_string));
+					return {
+						false,
+						{ members.begin(), members.end() },
+						mProperties
+					};
+				}
 
-            Serialize::ParticipantId mOwner;
-            std::map<std::string, std::string> mProperties;
-            std::set<Serialize::ParticipantId> mMembers;
-        };
+				Serialize::ParticipantId mOwner;
+				std::map<std::string, std::string> mProperties;
+				std::set<Serialize::ParticipantId> mMembers;
+			};
 
-        auto findLobby(Serialize::ParticipantId userId)
-        {
-            return std::ranges::find_if(mLobbies, [=](const MockupLobby &lobby) { return std::ranges::contains(lobby.mMembers, userId); }, &std::pair<const uint64_t, MockupLobby>::second);
-        }
+			auto findLobby(Serialize::ParticipantId userId)
+			{
+				return std::ranges::find_if(mLobbies, [=](const MockupLobby& lobby) { return std::ranges::contains(lobby.mMembers, userId); }, &std::pair<const uint64_t, MockupLobby>::second);
+			}
 
-        static Lobby toLobby(const std::pair<const uint64_t, MockupLobby> &p)
-        {
-            return { p.first, p.second.mProperties };
-        }
+			static Lobby toLobby(const std::pair<const uint64_t, MockupLobby>& p)
+			{
+				return { p.first, p.second.mProperties };
+			}
 
-        std::vector<Lobby> getLobbyListImpl() override
-        {
-            auto view = mLobbies | std::views::transform(&ServerState::toLobby);
-            return { view.begin(), view.end() };
-        }
+			static bool filter(const Lobby& lobby, const std::map<std::string, std::string>& filters)
+			{
+				for (const auto & [key, value] : filters) {
+					auto it = lobby.mProperties.find(key);
+					if (it == lobby.mProperties.end() || it->second != value)
+						return false;
+				}
 
-        LobbyInfo startMatchImpl(Serialize::SyncFunctionContext context) override
-        {
-            LobbyInfo result;
+				return true;
+			}
 
-            auto it = findLobby(context.mCallerId);
-            std::ranges::transform(it->second.mMembers, std::back_inserter(result.mPlayers), [](Serialize::ParticipantId id) { return PlayerInfo { std::to_string(id) }; });
-			result.mProperties = std::move(it->second.mProperties);
+			std::vector<Lobby> getLobbyListImpl(std::map<std::string, std::string> filters) override
+			{
+				auto view = mLobbies | std::views::transform(&ServerState::toLobby) | std::views::filter([&](const Lobby& lobby) {return filter(lobby, filters); });
+				return { view.begin(), view.end() };
+			}
 
-            it->second.mMembers.erase(context.mCallerId);
-            sendServerAddress(it->second.mMembers, mNetwork.getAddress(context.mCallerId), result);
-            
-            mLobbies.erase(it);
+			LobbyInfo startMatchImpl(Serialize::SyncFunctionContext context) override
+			{
+				LobbyInfo result;
 
-            return result;
-        }
+				auto it = findLobby(context.mCallerId);
+				std::ranges::transform(it->second.mMembers, std::back_inserter(result.mPlayers), [](Serialize::ParticipantId id) { return PlayerInfo{ std::to_string(id) }; });
+				result.mProperties = std::move(it->second.mProperties);
 
-        std::optional<LobbyInfo> joinLobbyImpl(Serialize::SyncFunctionContext context, uint64_t lobbyId) override
-        {
-            auto it = mLobbies.find(lobbyId);
-            it->second.mMembers.insert(context.mCallerId);
-            updateLobbyInfo(it->second.mMembers, it->second);
-            return it->second;
-        }
+				it->second.mMembers.erase(context.mCallerId);
+				sendServerAddress(it->second.mMembers, mNetwork.getAddress(context.mCallerId), result);
 
-        std::optional<LobbyInfo> createLobbyImpl(Serialize::SyncFunctionContext context, size_t maxPlayerCount, std::map<std::string, std::string> properties) override
-        {
-            auto pib = mLobbies.try_emplace(mRunningId++, context.mCallerId, std::move(properties));
-            assert(pib.second);
-            MockupLobby &lobby = pib.first->second;
-            lobby.mMembers.insert(context.mCallerId);
-            updateLobbyInfo(lobby.mMembers, lobby);
+				mLobbies.erase(it);
 
-            LOG("Created lobby " << pib.first->first << " for player " << context.mCallerId);
-            LOG("Properties: ");
-            for (const auto &[key, value] : lobby.mProperties)
-                LOG("\t" << key << ": " << value);
+				return result;
+			}
 
-            return lobby;
-        }
+			std::optional<LobbyInfo> joinLobbyImpl(Serialize::SyncFunctionContext context, uint64_t lobbyId) override
+			{
+				auto it = mLobbies.find(lobbyId);
+				it->second.mMembers.insert(context.mCallerId);
+				updateLobbyInfo(it->second.mMembers, it->second);
+				return it->second;
+			}
 
-        bool unlockAchievementImpl(Serialize::SyncFunctionContext context, std::string_view name) override
-        {
-            LOG("Unlocking achievement \"" << name << " for user " << context.mCallerId);
-            return true;
-        }
+			std::optional<LobbyInfo> createLobbyImpl(Serialize::SyncFunctionContext context, size_t maxPlayerCount, std::map<std::string, std::string> properties) override
+			{
+				auto pib = mLobbies.try_emplace(mRunningId++, context.mCallerId, std::move(properties));
+				assert(pib.second);
+				MockupLobby& lobby = pib.first->second;
+				lobby.mMembers.insert(context.mCallerId);
+				updateLobbyInfo(lobby.mMembers, lobby);
 
-        bool ingestStatImpl(Serialize::SyncFunctionContext context, std::string_view name, std::string_view leaderboardName, int32_t value) override
-        {
-            LOG("Setting stat \"" << name << "\" in leaderboard \"" << leaderboardName << "\" to " << value << " for user " << context.mCallerId);
-            return true;
-        }
+				LOG("Created lobby " << pib.first->first << " for player " << context.mCallerId);
+				LOG("Properties: ");
+				for (const auto& [key, value] : lobby.mProperties)
+					LOG("\t" << key << ": " << value);
 
-        void setLobbyPropertyImpl(Serialize::SyncFunctionContext context, std::string_view key, std::string_view value) override
-        {
-            auto &[id, lobby] = *findLobby(context.mCallerId);
-            lobby.mProperties[std::string { key }] = value;
-			LOG("Setting lobby property \"" << key << "\" to \"" << value << "\" for lobby " << id);
-            updateLobbyInfo(lobby.mMembers, lobby);
-        }
+				return lobby;
+			}
 
-        void leaveLobbyImpl(Serialize::SyncFunctionContext context) override
-        {
-            auto it = findLobby(context.mCallerId);
-            if (it != mLobbies.end()) {
-                auto &[id, lobby] = *it;
-                lobby.mMembers.erase(context.mCallerId);
-                updateLobbyInfo(lobby.mMembers, lobby);
-            }
-        }
+			bool unlockAchievementImpl(Serialize::SyncFunctionContext context, std::string_view name) override
+			{
+				LOG("Unlocking achievement \"" << name << " for user " << context.mCallerId);
+				return true;
+			}
 
-        void leaveMatchImpl(Serialize::SyncFunctionContext context) override
-        {
-        }
+			bool ingestStatImpl(Serialize::SyncFunctionContext context, std::string_view name, std::string_view leaderboardName, int32_t value) override
+			{
+				LOG("Setting stat \"" << name << "\" in leaderboard \"" << leaderboardName << "\" to " << value << " for user " << context.mCallerId);
+				return true;
+			}
 
-        std::map<uint64_t, MockupLobby> mLobbies;
+			void setLobbyPropertyImpl(Serialize::SyncFunctionContext context, std::string_view key, std::string_view value) override
+			{
+				auto& [id, lobby] = *findLobby(context.mCallerId);
+				lobby.mProperties[std::string{ key }] = value;
+				LOG("Setting lobby property \"" << key << "\" to \"" << value << "\" for lobby " << id);
+				updateLobbyInfo(lobby.mMembers, lobby);
+			}
 
-        uint64_t mRunningId = 1;
+			void leaveLobbyImpl(Serialize::SyncFunctionContext context) override
+			{
+				auto it = findLobby(context.mCallerId);
+				if (it != mLobbies.end()) {
+					auto& [id, lobby] = *it;
+					lobby.mMembers.erase(context.mCallerId);
+					updateLobbyInfo(lobby.mMembers, lobby);
+				}
+				updateLobbyInfo({ context.mCallerId }, std::nullopt);
+			}
 
-    };
-}
+			void leaveMatchImpl(Serialize::SyncFunctionContext context) override
+			{
+			}
+
+			std::map<uint64_t, MockupLobby> mLobbies;
+
+			uint64_t mRunningId = 1;
+
+		};
+	}
 }
 
 int main()
 {
-    Serialize::NoParent<FirstParty::ServerState> state;
+	Serialize::NoParent<FirstParty::ServerState> state;
 
-    Network::NetworkManagerResult result = state.startServer(12346);
-    if (result != Network::NetworkManagerResult { Network::NetworkManagerResult::SUCCESS }) {
-        LOG_ERROR("Failed to start Mockup server: " << result);
-        return -1;
-    }
-    LOG("Mockup server started!");
+	Network::NetworkManagerResult result = state.startServer(12346);
+	if (result != Network::NetworkManagerResult{ Network::NetworkManagerResult::SUCCESS }) {
+		LOG_ERROR("Failed to start Mockup server: " << result);
+		return -1;
+	}
+	LOG("Mockup server started!");
 
-    while (true) {
-        state.update();
-        std::this_thread::sleep_for(1s);
-    }
+	while (true) {
+		state.update();
+		std::this_thread::sleep_for(1s);
+	}
 }

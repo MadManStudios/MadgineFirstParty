@@ -20,8 +20,9 @@ namespace FirstParty {
 
         void update();
         Threading::Task<bool> connect();
+        void disconnect();
 
-        void updateLobbyInfoImpl(LobbyInfo info) override;
+        void updateLobbyInfoImpl(std::optional<LobbyInfo> info) override;
         void sendServerAddressImpl(SocketAddress address, LobbyInfo session) override;
 
         MockupServices &mServices;
@@ -54,19 +55,16 @@ namespace FirstParty {
 
         /////////// MATCHMAKING
 
-        Threading::Task<std::vector<Lobby>> getLobbyListTask() override;
-        Threading::Task<std::optional<LobbyInfo>> createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties = {}) override;
-        Threading::Task<std::optional<LobbyInfo>> joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb) override;
+        Threading::Task<std::vector<Lobby>> getLobbyListTask(std::map<std::string, std::string> filters) override;
+        Threading::Task<std::optional<LobbyInfo>> createLobbyTask(size_t maxPlayerCount, std::map<std::string, std::string> properties = {}) override;
+        Threading::Task<std::optional<LobbyInfo>> joinLobbyTask(uint64_t id) override;
         Threading::Task<std::optional<ServerInfo>> startMatchTask() override;
         void leaveLobby() override;
         void leaveMatch() override;
 
         void setLobbyProperty(std::string_view key, std::string_view value) override;
-        void updateLobbyInfo(LobbyInfo info);
+        void updateLobbyInfo(std::optional<LobbyInfo> info);
         void connectToServer(SocketAddress address, LobbyInfo session);
-
-        MatchmakingCallback mCurrentMatchmakingCallback;
-        SessionStartedCallback mSessionStartedCallback;  
 
         //////////////////
 

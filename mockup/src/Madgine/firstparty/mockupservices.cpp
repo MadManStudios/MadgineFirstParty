@@ -39,9 +39,15 @@ namespace FirstParty {
         co_return (co_await mNetwork.connect("127.0.0.1", 12346, Serialize::Formats::xml, 1s)).is_value();
     }
 
-    void MockupClientState::updateLobbyInfoImpl(LobbyInfo info)
+    void MockupClientState::disconnect()
     {
-        info.mIsOwner = mIsOwner;
+        mNetwork.close();
+	}
+
+    void MockupClientState::updateLobbyInfoImpl(std::optional<LobbyInfo> info)
+    {
+        if (info)
+            info->mIsOwner = mIsOwner;
         mServices.updateLobbyInfo(std::move(info));
     }
 
@@ -62,6 +68,10 @@ namespace FirstParty {
                 mState.update();
                 co_await 10ms;
             }
+            leaveLobby();
+            mState.update();
+            mState.disconnect();
+            mLobbyInfo.set(std::nullopt);
         });
         root.taskQueue()->queue([this]() -> Threading::Task<void> {
             mInitialized = co_await mState.connect();
@@ -97,19 +107,16 @@ namespace FirstParty {
         co_return co_await mState.unlockAchievement(name);
     }
 
-    Threading::Task<std::vector<Lobby>> MockupServices::getLobbyListTask()
+    Threading::Task<std::vector<Lobby>> MockupServices::getLobbyListTask(std::map<std::string, std::string> filters)
     {
-        co_return co_await mState.getLobbyList();
+        co_return co_await mState.getLobbyList(std::move(filters));
     }
 
-    Threading::Task<std::optional<LobbyInfo>> MockupServices::createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties)
+    Threading::Task<std::optional<LobbyInfo>> MockupServices::createLobbyTask(size_t maxPlayerCount, std::map<std::string, std::string> properties)
     {
         std::optional<LobbyInfo> lobby = co_await mState.createLobby(maxPlayerCount, properties);
 
         if (lobby) {
-            mCurrentMatchmakingCallback = std::move(cb);
-            mSessionStartedCallback = std::move(sessionCb);
-
             lobby->mIsOwner = true;
         }
 
@@ -118,14 +125,11 @@ namespace FirstParty {
         co_return lobby;
     }
 
-    Threading::Task<std::optional<LobbyInfo>> MockupServices::joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb)
+    Threading::Task<std::optional<LobbyInfo>> MockupServices::joinLobbyTask(uint64_t id)
     {
         std::optional<LobbyInfo> lobby = co_await mState.joinLobby(id);
 
-        if (lobby) {
-            mCurrentMatchmakingCallback = std::move(cb);
-            mSessionStartedCallback = std::move(sessionCb);
-            
+        if (lobby) {            
             lobby->mIsOwner = false;
         }        
 
@@ -177,7 +181,7 @@ namespace FirstParty {
         mState.setLobbyProperty(key, value);
     }
 
-    void MockupServices::updateLobbyInfo(LobbyInfo info)
+    void MockupServices::updateLobbyInfo(std::optional<LobbyInfo> info)
     {
         mLobbyInfo.set(std::move(info));
     }

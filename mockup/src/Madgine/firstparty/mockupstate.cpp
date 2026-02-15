@@ -55,7 +55,7 @@ namespace Engine {
 			mNetwork.sendAndReceiveMessages();
 		}
 
-		std::vector<Lobby> MockupState::getLobbyListImpl()
+		std::vector<Lobby> MockupState::getLobbyListImpl(std::map<std::string, std::string> filters)
 		{
 			throw 0;
 		}
@@ -100,7 +100,7 @@ namespace Engine {
 			throw 0;
 		}
 
-		void MockupState::updateLobbyInfoImpl(LobbyInfo info)
+		void MockupState::updateLobbyInfoImpl(std::optional<LobbyInfo> info)
 		{
 			throw 0;
 		}
@@ -110,9 +110,9 @@ namespace Engine {
 			throw 0;
 		}
 
-		Threading::Task<std::vector<Lobby>> MockupState::getLobbyList()
+		Threading::Task<std::vector<Lobby>> MockupState::getLobbyList(std::map<std::string, std::string> filters)
 		{
-			co_return (co_await query<&MockupState::getLobbyListImpl>()).value();
+			co_return (co_await query<&MockupState::getLobbyListImpl>(std::move(filters))).value();
 		}
 
 		Threading::Task<LobbyInfo> MockupState::startMatch()
@@ -155,7 +155,7 @@ namespace Engine {
 			command<&MockupState::leaveMatchImpl>();
 		}
 
-		void MockupState::updateLobbyInfo(const std::set<Serialize::ParticipantId>& targets, LobbyInfo info)
+		void MockupState::updateLobbyInfo(const std::set<Serialize::ParticipantId>& targets, std::optional<LobbyInfo> info)
 		{
 			notify_some<&MockupState::updateLobbyInfoImpl>(targets, std::move(info));
 		}

@@ -128,10 +128,12 @@ namespace FirstParty {
         mInitialized = true;
 
         root.taskQueue()->queue([this]() -> Threading::Task<void> {
-            while (mRoot.taskQueue()->running() || mRoot.taskQueue()->taskInFlightCount() > 1) {
+            while (mRoot.taskQueue()->running()){
                 EOS_Platform_Tick(mPlatformHandle);
                 co_await 100ms;
             }
+            leaveLobby();
+            mLobbyInfo.set(std::nullopt);
         });
 
         mUserId = root.taskQueue()->queueTask(loginUser());
@@ -459,17 +461,17 @@ namespace FirstParty {
         throw 0;
     }
 
-    Threading::Task<std::vector<Lobby>> EpicServices::getLobbyListTask()
+    Threading::Task<std::vector<Lobby>> EpicServices::getLobbyListTask(std::map<std::string, std::string> filters)
     {
         throw 0;
     }
 
-    Threading::Task<std::optional<LobbyInfo>> EpicServices::createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties)
+    Threading::Task<std::optional<LobbyInfo>> EpicServices::createLobbyTask(size_t maxPlayerCount, std::map<std::string, std::string> properties)
     {
         throw 0;
     }
 
-    Threading::Task<std::optional<LobbyInfo>> EpicServices::joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb)
+    Threading::Task<std::optional<LobbyInfo>> EpicServices::joinLobbyTask(uint64_t id)
     {
         throw 0;
     }

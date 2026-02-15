@@ -14,7 +14,7 @@ namespace FirstParty {
 
         void update();
 
-        Threading::Task<std::vector<Lobby>> getLobbyList();
+        Threading::Task<std::vector<Lobby>> getLobbyList(std::map<std::string, std::string> filters);
         Threading::Task<LobbyInfo> startMatch();
         Threading::Task<std::optional<LobbyInfo>> joinLobby(uint64_t lobbyId);
         Threading::Task<std::optional<LobbyInfo>> createLobby(size_t maxPlayerCount, std::map<std::string, std::string> properties);
@@ -24,10 +24,10 @@ namespace FirstParty {
         void setLobbyProperty(std::string_view key, std::string_view value);
         void leaveLobby();
         void leaveMatch();
-        void updateLobbyInfo(const std::set<Serialize::ParticipantId> &targets, LobbyInfo info);
+        void updateLobbyInfo(const std::set<Serialize::ParticipantId> &targets, std::optional<LobbyInfo> info);
         void sendServerAddress(const std::set<Serialize::ParticipantId> &targets, SocketAddress address, LobbyInfo session);
 
-        virtual std::vector<Lobby> getLobbyListImpl();
+        virtual std::vector<Lobby> getLobbyListImpl(std::map<std::string, std::string> filters);
         virtual LobbyInfo startMatchImpl(Serialize::SyncFunctionContext context);
         virtual std::optional<LobbyInfo> joinLobbyImpl(Serialize::SyncFunctionContext context, uint64_t lobbyId);
         virtual std::optional<LobbyInfo> createLobbyImpl(Serialize::SyncFunctionContext context, size_t maxPlayerCount, std::map<std::string, std::string> properties);
@@ -36,7 +36,7 @@ namespace FirstParty {
         virtual void setLobbyPropertyImpl(Serialize::SyncFunctionContext context, std::string_view key, std::string_view value);
         virtual void leaveLobbyImpl(Serialize::SyncFunctionContext context);
         virtual void leaveMatchImpl(Serialize::SyncFunctionContext context);
-        virtual void updateLobbyInfoImpl(LobbyInfo info);
+        virtual void updateLobbyInfoImpl(std::optional<LobbyInfo> info);
         virtual void sendServerAddressImpl(SocketAddress address, LobbyInfo session);
 
         
