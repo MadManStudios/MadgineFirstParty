@@ -46,16 +46,13 @@ namespace FirstParty {
     };
 
     struct LobbyInfo {
+        bool mIsOwner;
         std::vector<PlayerInfo> mPlayers;
         std::map<std::string, std::string> mProperties;
     };
 
-    struct SessionInfo {
-        std::vector<PlayerInfo> mPlayers;
-    };
-
     struct ServerInfo {
-        SessionInfo mSession;
+        LobbyInfo mSession;
         std::vector<Serialize::ParticipantId> mIds;
     };
 
@@ -88,16 +85,16 @@ namespace FirstParty {
         ///////// MATCHMAKING
 
         using MatchmakingCallback = Closure<Serialize::Format(Serialize::SyncManager &)>;
-        using SessionStartedCallback = Closure<void(SessionInfo)>;
+        using SessionStartedCallback = Closure<void(LobbyInfo)>;
 
         Threading::TaskFuture<std::vector<Lobby>> getLobbyList();
         virtual Threading::Task<std::vector<Lobby>> getLobbyListTask() = 0;
 
-        Threading::TaskFuture<std::optional<Lobby>> createLobby(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb = {}, std::map<std::string, std::string> properties = {});
-        virtual Threading::Task<std::optional<Lobby>> createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb = {}, std::map<std::string, std::string> properties = {}) = 0;
+        Threading::TaskFuture<std::optional<LobbyInfo>> createLobby(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb = {}, std::map<std::string, std::string> properties = {});
+        virtual Threading::Task<std::optional<LobbyInfo>> createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb = {}, std::map<std::string, std::string> properties = {}) = 0;
 
-        Threading::TaskFuture<std::optional<Lobby>> joinLobby(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb);
-        virtual Threading::Task<std::optional<Lobby>> joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb) = 0;
+        Threading::TaskFuture<std::optional<LobbyInfo>> joinLobby(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb);
+        virtual Threading::Task<std::optional<LobbyInfo>> joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb) = 0;
 
         Threading::TaskFuture<std::optional<ServerInfo>> startMatch();
         virtual Threading::Task<std::optional<ServerInfo>> startMatchTask() = 0;
@@ -107,7 +104,6 @@ namespace FirstParty {
         Execution::ValueStub<std::optional<LobbyInfo>> &lobbyInfo();
         Execution::Value<std::optional<LobbyInfo>> mLobbyInfo;
 
-        virtual bool isLobbyOwner() const = 0;
         virtual void leaveLobby() = 0;
         virtual void leaveMatch() = 0;
 

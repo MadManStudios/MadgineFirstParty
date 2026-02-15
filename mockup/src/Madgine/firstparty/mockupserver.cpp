@@ -34,6 +34,7 @@ namespace FirstParty {
             {
                 auto members = mMembers | std::views::transform(LIFT(std::to_string));
                 return {
+                    false,
                     { members.begin(), members.end() },
                     mProperties
                 };
@@ -60,13 +61,14 @@ namespace FirstParty {
             return { view.begin(), view.end() };
         }
 
-        SessionInfo startMatchImpl(Serialize::SyncFunctionContext context) override
+        LobbyInfo startMatchImpl(Serialize::SyncFunctionContext context) override
         {
-            SessionInfo result;
+            LobbyInfo result;
 
             auto it = findLobby(context.mCallerId);
             std::ranges::transform(it->second.mMembers, std::back_inserter(result.mPlayers), [](Serialize::ParticipantId id) { return PlayerInfo { std::to_string(id) }; });
-            
+			result.mProperties = std::move(it->second.mProperties);
+
             it->second.mMembers.erase(context.mCallerId);
             sendServerAddress(it->second.mMembers, mNetwork.getAddress(context.mCallerId), result);
             
@@ -75,15 +77,15 @@ namespace FirstParty {
             return result;
         }
 
-        std::optional<Lobby> joinLobbyImpl(Serialize::SyncFunctionContext context, uint64_t lobbyId) override
+        std::optional<LobbyInfo> joinLobbyImpl(Serialize::SyncFunctionContext context, uint64_t lobbyId) override
         {
             auto it = mLobbies.find(lobbyId);
             it->second.mMembers.insert(context.mCallerId);
             updateLobbyInfo(it->second.mMembers, it->second);
-            return toLobby(*it);
+            return it->second;
         }
 
-        std::optional<Lobby> createLobbyImpl(Serialize::SyncFunctionContext context, size_t maxPlayerCount, std::map<std::string, std::string> properties) override
+        std::optional<LobbyInfo> createLobbyImpl(Serialize::SyncFunctionContext context, size_t maxPlayerCount, std::map<std::string, std::string> properties) override
         {
             auto pib = mLobbies.try_emplace(mRunningId++, context.mCallerId, std::move(properties));
             assert(pib.second);
@@ -96,7 +98,7 @@ namespace FirstParty {
             for (const auto &[key, value] : lobby.mProperties)
                 LOG("\t" << key << ": " << value);
 
-            return toLobby(*pib.first);
+            return lobby;
         }
 
         bool unlockAchievementImpl(Serialize::SyncFunctionContext context, std::string_view name) override

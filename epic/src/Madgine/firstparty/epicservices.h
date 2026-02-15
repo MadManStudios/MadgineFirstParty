@@ -66,12 +66,11 @@ namespace FirstParty {
         /////////// MATCHMAKING
 
         Threading::Task<std::vector<Lobby>> getLobbyListTask() override;
-        Threading::Task<std::optional<Lobby>> createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties = {}) override;
-        Threading::Task<std::optional<Lobby>> joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb) override;
+        Threading::Task<std::optional<LobbyInfo>> createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties = {}) override;
+        Threading::Task<std::optional<LobbyInfo>> joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb) override;
         Threading::Task<std::optional<ServerInfo>> startMatchTask() override;
         void leaveLobby() override;
         void leaveMatch() override;
-        bool isLobbyOwner() const override;
 
         void setLobbyProperty(std::string_view key, std::string_view value) override;
 

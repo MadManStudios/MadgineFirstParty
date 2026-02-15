@@ -28,10 +28,6 @@ FIELD(mSession)
 FIELD(mIds)
 SERIALIZETABLE_END(Engine::FirstParty::ServerInfo)
 
-SERIALIZETABLE_BEGIN(Engine::FirstParty::SessionInfo)
-FIELD(mPlayers)
-SERIALIZETABLE_END(Engine::FirstParty::SessionInfo)
-
 SERIALIZETABLE_BEGIN(Engine::FirstParty::MockupState)
 SYNCFUNCTION(getLobbyListImpl)
 SYNCFUNCTION(setLobbyPropertyImpl)
@@ -64,17 +60,17 @@ namespace Engine {
 			throw 0;
 		}
 
-		SessionInfo MockupState::startMatchImpl(Serialize::SyncFunctionContext context)
+		LobbyInfo MockupState::startMatchImpl(Serialize::SyncFunctionContext context)
 		{
 			throw 0;
 		}
 
-		std::optional<Lobby> MockupState::joinLobbyImpl(Serialize::SyncFunctionContext context, uint64_t lobbyId)
+		std::optional<LobbyInfo> MockupState::joinLobbyImpl(Serialize::SyncFunctionContext context, uint64_t lobbyId)
 		{
 			throw 0;
 		}
 
-		std::optional<Lobby> MockupState::createLobbyImpl(Serialize::SyncFunctionContext context, size_t maxPlayerCount, std::map<std::string, std::string> properties)
+		std::optional<LobbyInfo> MockupState::createLobbyImpl(Serialize::SyncFunctionContext context, size_t maxPlayerCount, std::map<std::string, std::string> properties)
 		{
 			throw 0;
 		}
@@ -109,7 +105,7 @@ namespace Engine {
 			throw 0;
 		}
 
-		void MockupState::sendServerAddressImpl(SocketAddress address, SessionInfo session)
+		void MockupState::sendServerAddressImpl(SocketAddress address, LobbyInfo session)
 		{
 			throw 0;
 		}
@@ -119,17 +115,17 @@ namespace Engine {
 			co_return (co_await query<&MockupState::getLobbyListImpl>()).value();
 		}
 
-		Threading::Task<SessionInfo> MockupState::startMatch()
+		Threading::Task<LobbyInfo> MockupState::startMatch()
 		{
 			co_return (co_await query<&MockupState::startMatchImpl>()).value();
 		}
 
-		Threading::Task<std::optional<Lobby>> MockupState::joinLobby(uint64_t id)
+		Threading::Task<std::optional<LobbyInfo>> MockupState::joinLobby(uint64_t id)
 		{
 			co_return (co_await query<&MockupState::joinLobbyImpl>(id)).value();
 		}
 
-		Threading::Task<std::optional<Lobby>> MockupState::createLobby(size_t maxPlayerCount, std::map<std::string, std::string> properties)
+		Threading::Task<std::optional<LobbyInfo>> MockupState::createLobby(size_t maxPlayerCount, std::map<std::string, std::string> properties)
 		{
 			co_return (co_await query<&MockupState::createLobbyImpl>(maxPlayerCount, properties)).value();
 		}
@@ -164,7 +160,7 @@ namespace Engine {
 			notify_some<&MockupState::updateLobbyInfoImpl>(targets, std::move(info));
 		}
 
-		void MockupState::sendServerAddress(const std::set<Serialize::ParticipantId>& targets, SocketAddress address, SessionInfo session)
+		void MockupState::sendServerAddress(const std::set<Serialize::ParticipantId>& targets, SocketAddress address, LobbyInfo session)
 		{
 			notify_some<&MockupState::sendServerAddressImpl>(targets, std::move(address), std::move(session));
 		}

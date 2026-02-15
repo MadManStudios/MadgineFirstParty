@@ -464,12 +464,12 @@ namespace FirstParty {
         throw 0;
     }
 
-    Threading::Task<std::optional<Lobby>> EpicServices::createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties)
+    Threading::Task<std::optional<LobbyInfo>> EpicServices::createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties)
     {
         throw 0;
     }
 
-    Threading::Task<std::optional<Lobby>> EpicServices::joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb)
+    Threading::Task<std::optional<LobbyInfo>> EpicServices::joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb)
     {
         throw 0;
     }
@@ -485,11 +485,6 @@ namespace FirstParty {
     }
 
     void EpicServices::leaveMatch()
-    {
-        throw 0;
-    }
-
-    bool EpicServices::isLobbyOwner() const
     {
         throw 0;
     }

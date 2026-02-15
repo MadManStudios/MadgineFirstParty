@@ -41,10 +41,11 @@ namespace FirstParty {
 
     void MockupClientState::updateLobbyInfoImpl(LobbyInfo info)
     {
+        info.mIsOwner = mIsOwner;
         mServices.updateLobbyInfo(std::move(info));
     }
 
-    void MockupClientState::sendServerAddressImpl(SocketAddress address, SessionInfo session)
+    void MockupClientState::sendServerAddressImpl(SocketAddress address, LobbyInfo session)
     {
         mServices.connectToServer(std::move(address), std::move(session));
     }
@@ -101,30 +102,34 @@ namespace FirstParty {
         co_return co_await mState.getLobbyList();
     }
 
-    Threading::Task<std::optional<Lobby>> MockupServices::createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties)
+    Threading::Task<std::optional<LobbyInfo>> MockupServices::createLobbyTask(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties)
     {
-        std::optional<Lobby> lobby = co_await mState.createLobby(maxPlayerCount, properties);
+        std::optional<LobbyInfo> lobby = co_await mState.createLobby(maxPlayerCount, properties);
 
         if (lobby) {
             mCurrentMatchmakingCallback = std::move(cb);
             mSessionStartedCallback = std::move(sessionCb);
+
+            lobby->mIsOwner = true;
         }
 
-        mLobbyOwner = true;
+        mState.mIsOwner = true;
 
         co_return lobby;
     }
 
-    Threading::Task<std::optional<Lobby>> MockupServices::joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb)
+    Threading::Task<std::optional<LobbyInfo>> MockupServices::joinLobbyTask(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb)
     {
-        std::optional<Lobby> lobby = co_await mState.joinLobby(id);
+        std::optional<LobbyInfo> lobby = co_await mState.joinLobby(id);
 
         if (lobby) {
             mCurrentMatchmakingCallback = std::move(cb);
             mSessionStartedCallback = std::move(sessionCb);
-        }
+            
+            lobby->mIsOwner = false;
+        }        
 
-        mLobbyOwner = false;
+        mState.mIsOwner = false;
 
         co_return lobby;
     }
@@ -134,7 +139,7 @@ namespace FirstParty {
         Serialize::Format format = mCurrentMatchmakingCallback(mSyncManager);
         mSyncManager.startServer(12348);
 
-        SessionInfo session = co_await mState.startMatch();
+        LobbyInfo session = co_await mState.startMatch();
 
         if (mSessionStartedCallback)
             mSessionStartedCallback(session);
@@ -151,13 +156,12 @@ namespace FirstParty {
         std::set<Serialize::ParticipantId> clients = mSyncManager.clients();
         clients.insert(Serialize::sLocalMasterParticipantId);
 
-        co_return { { session.mPlayers,
+        co_return { { session,
             { clients.begin(), clients.end() } } };
     }
 
     void MockupServices::leaveLobby()
     {
-        mLobbyOwner = false;
         mState.leaveLobby();
     }
 
@@ -166,11 +170,6 @@ namespace FirstParty {
         mState.leaveMatch();
         mSyncManager.close();
         mSyncManager.clearTopLevelItems();
-    }
-
-    bool MockupServices::isLobbyOwner() const
-    {
-        return mLobbyOwner;
     }
 
     void MockupServices::setLobbyProperty(std::string_view key, std::string_view value)
@@ -183,7 +182,7 @@ namespace FirstParty {
         mLobbyInfo.set(std::move(info));
     }
 
-    void MockupServices::connectToServer(SocketAddress address, SessionInfo session)
+    void MockupServices::connectToServer(SocketAddress address, LobbyInfo session)
     {
         Serialize::Format format = mCurrentMatchmakingCallback(mSyncManager);
 

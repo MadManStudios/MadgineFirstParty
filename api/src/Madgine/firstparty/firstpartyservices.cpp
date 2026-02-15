@@ -45,12 +45,12 @@ namespace FirstParty {
         return mRoot.taskQueue()->queueTask(getLobbyListTask());
     }
 
-    Threading::TaskFuture<std::optional<Lobby>> FirstPartyServices::createLobby(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties)
+    Threading::TaskFuture<std::optional<LobbyInfo>> FirstPartyServices::createLobby(size_t maxPlayerCount, MatchmakingCallback cb, SessionStartedCallback sessionCb, std::map<std::string, std::string> properties)
     {
         return mRoot.taskQueue()->queueTask(createLobbyTask(maxPlayerCount, std::move(cb), std::move(sessionCb), std::move(properties)));
     }
 
-    Threading::TaskFuture<std::optional<Lobby>> FirstPartyServices::joinLobby(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb)
+    Threading::TaskFuture<std::optional<LobbyInfo>> FirstPartyServices::joinLobby(uint64_t id, MatchmakingCallback cb, SessionStartedCallback sessionCb)
     {
         return mRoot.taskQueue()->queueTask(joinLobbyTask(id, std::move(cb), std::move(sessionCb)));
     }
