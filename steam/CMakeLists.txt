@@ -3,7 +3,7 @@ Project(SteamServices)
 add_subdirectory(shared)
 
 if (NOT TARGET Steamworks)
-	return()
+	set(stub STUB)
 endif()
 
 
@@ -30,11 +30,13 @@ FolderSources(sources "" src)
 FolderSources(sources src Madgine)
 	FolderSources(sources Madgine firstparty steamservices.cpp steamservices.h steamstreambuf.cpp steamstreambuf.h steamstreamdata.cpp steamstreamdata.h steamsyncmanager.cpp steamsyncmanager.h)
 
-add_plugin(SteamServices Madgine FirstParty ${sources} PRECOMPILED_HEADER src/Madgine/steamserviceslib.h)
+add_plugin(SteamServices Madgine FirstParty ${sources} PRECOMPILED_HEADER src/Madgine/steamserviceslib.h ${stub}) 
 
 target_link_plugins(SteamServices FirstParty)
 
-target_link_libraries(SteamServices PUBLIC Steamworks)
+if (TARGET Steamworks)
+	target_link_libraries(SteamServices PUBLIC Steamworks)
+endif()
 
 target_compile_definitions(SteamServices PRIVATE STEAM_APP_ID=${Steam_AppId})
 

@@ -1,8 +1,14 @@
 Project(Steamworks)
 
-set(Steamworks_Dir "" CACHE FILEPATH "")
+set(Steamworks_Dir $ENV{STEAMWORKS_SDK} CACHE FILEPATH "")
 
 if (Steamworks_Dir)
+
+	if (NOT EXISTS ${Steamworks_Dir})
+		MESSAGE(WARNING "Provided Steamworks SDK directory does not exist: ${Steamworks_Dir}")
+		return()
+	endif()
+
 
 	add_library(Steamworks SHARED IMPORTED GLOBAL)
 
@@ -18,5 +24,8 @@ if (Steamworks_Dir)
 			${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 	add_dependencies(Steamworks SteamworksCopy)
+
+else()
+	MESSAGE(STATUS "No Steamworks SDK directory provided. Set 'Steamworks_Dir' in your toplevel CMakeLists.txt file or the environment variable 'STEAMWORKS_SDK' to enable Steamworks support.")
 
 endif()

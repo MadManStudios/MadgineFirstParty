@@ -3,7 +3,7 @@ Project(GooglePlayServices)
 add_subdirectory(shared)
 
 if (NOT TARGET PlayServices)
-	set(stub)
+	set(stub STUB)
 endif()
 
 
@@ -12,7 +12,6 @@ MESSAGE(STATUS "--- Google Play ---")
 
 if (NOT EXISTS ${MADGINE_CONFIGURATION}/res/values/games-ids.xml)
 	MESSAGE(STATUS "No games-ids.xml provided. Plugin disabled. Add res/values/games-ids.xml to your MADGINE_CONFIGURATION location.")
-	MESSAGE(STATUS "--- Google Play End ---")
 	set(stub STUB)
 endif ()
 

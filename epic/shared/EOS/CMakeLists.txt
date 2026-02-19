@@ -1,8 +1,14 @@
 Project(EOS)
 
-set(EOS_Dir "" CACHE FILEPATH "")
+set(EOS_Dir $ENV{EOS_SDK} CACHE FILEPATH "")
 
 if (EOS_Dir)
+
+	if (NOT EXISTS ${EOS_Dir})
+		MESSAGE(WARNING "Provided Steamworks SDK directory does not exist: ${EOS_Dir}")
+		return()
+	endif()
+
 
 	add_library(EOS SHARED IMPORTED GLOBAL)
 
@@ -17,5 +23,8 @@ if (EOS_Dir)
 			${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 	add_dependencies(EOS EOSCopy)
+
+else()
+	MESSAGE(STATUS "No EOS SDK directory provided. Set 'EOS_Dir' in your toplevel CMakeLists.txt file or the environment variable 'EOS_SDK' to enable EOS support.")
 
 endif()
