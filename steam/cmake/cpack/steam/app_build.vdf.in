@@ -1,0 +1,14 @@
+"AppBuild"
+{
+	"AppID" "${Steam_AppId}" // Your AppID
+	"Desc" "Your build description here" // internal description for this build
+	"Preview" "1" // make this a preview build only, nothing is uploaded
+	"ContentRoot" "Content/" // content root folder relative to this script file
+	"BuildOutput" "_CPack_Packages/steam/" // put build cache and log files on different drive for better performance
+	"verbose" "1" // spew more build details in console
+	"Depots"
+	{
+		// file mapping instructions for each depot are in separate script files
+		"${Steam_DepotId}" "depot_build_${Steam_DepotId}.vdf"		
+	}
+}

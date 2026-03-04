@@ -42,6 +42,7 @@ namespace Engine {
 
 				Serialize::ParticipantId mOwner;
 				std::map<std::string, std::string> mProperties;
+				size_t mMaxPlayerCount;
 				std::set<Serialize::ParticipantId> mMembers;
 			};
 
@@ -55,8 +56,11 @@ namespace Engine {
 				return { p.first, p.second.mProperties };
 			}
 
-			static bool filter(const Lobby& lobby, const std::map<std::string, std::string>& filters)
+			static bool filter(const MockupLobby& lobby, const std::map<std::string, std::string>& filters)
 			{
+				if (lobby.mMembers.size() == lobby.mMaxPlayerCount)
+					return false;
+
 				for (const auto & [key, value] : filters) {
 					auto it = lobby.mProperties.find(key);
 					if (it == lobby.mProperties.end() || it->second != value)
@@ -68,7 +72,7 @@ namespace Engine {
 
 			std::vector<Lobby> getLobbyListImpl(std::map<std::string, std::string> filters) override
 			{
-				auto view = mLobbies | std::views::transform(&ServerState::toLobby) | std::views::filter([&](const Lobby& lobby) {return filter(lobby, filters); });
+				auto view = mLobbies | std::views::filter([&](const std::pair<const uint64_t, MockupLobby>& p) {return filter(p.second, filters); }) | std::views::transform(&ServerState::toLobby);
 				return { view.begin(), view.end() };
 			}
 
@@ -91,6 +95,8 @@ namespace Engine {
 			std::optional<LobbyInfo> joinLobbyImpl(Serialize::SyncFunctionContext context, uint64_t lobbyId) override
 			{
 				auto it = mLobbies.find(lobbyId);
+				if (it->second.mMembers.size() == it->second.mMaxPlayerCount)
+					return {};
 				it->second.mMembers.insert(context.mCallerId);
 				updateLobbyInfo(it->second.mMembers, it->second);
 				return it->second;
@@ -98,7 +104,7 @@ namespace Engine {
 
 			std::optional<LobbyInfo> createLobbyImpl(Serialize::SyncFunctionContext context, size_t maxPlayerCount, std::map<std::string, std::string> properties) override
 			{
-				auto pib = mLobbies.try_emplace(mRunningId++, context.mCallerId, std::move(properties));
+				auto pib = mLobbies.try_emplace(mRunningId++, context.mCallerId, std::move(properties), maxPlayerCount);
 				assert(pib.second);
 				MockupLobby& lobby = pib.first->second;
 				lobby.mMembers.insert(context.mCallerId);

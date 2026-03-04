@@ -46,7 +46,6 @@ namespace Engine {
 					co_await 10ms;
 				}
 				leaveLobby();
-				mLobbyInfo.set(std::nullopt);
 				});
 		}
 
@@ -212,6 +211,7 @@ namespace Engine {
 
 			ServerInfo server;
 			server.mSession.mPlayers = getLobbyPlayers();
+			server.mSession.mProperties = getLobbyProperties(mCurrentLobby);
 			std::vector<CSteamID> players;
 			for (int i = 0; i < playerCount; ++i) {
 				players.emplace_back(SteamMatchmaking()->GetLobbyMemberByIndex(mCurrentLobby, i));
@@ -242,6 +242,7 @@ namespace Engine {
 			if (mCurrentLobby.IsValid()) {
 				SteamMatchmaking()->LeaveLobby(mCurrentLobby);
 				mCurrentLobby.Clear();
+				mLobbyInfo.set(std::nullopt);
 				mCurrentMatchmakingCallback = {};
 				mSessionStartedCallback = {};
 			}

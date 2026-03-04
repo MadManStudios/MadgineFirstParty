@@ -1,0 +1,1 @@
+${Steamworks_Dir}/tools/ContentBuilder/builder/steamcmd.exe +login schuetzo2 +run_app_build ${CPACK_PACKAGE_DIRECTORY}/app_build.vdf +quit

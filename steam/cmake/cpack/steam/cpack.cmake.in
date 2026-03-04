@@ -1,0 +1,21 @@
+
+set(Steam_AppId "@Steam_AppId@")
+set(Steam_DepotId "@Steam_DepotId@")
+set(Steamworks_Dir "@Steamworks_Dir@")
+
+MESSAGE(STATUS "Building App ${Steam_AppId}")
+MESSAGE(STATUS "   Building Depot ${Steam_DepotId}")
+
+file(REMOVE_RECURSE ${CPACK_PACKAGE_DIRECTORY}/Content)
+
+foreach (component ${CPACK_COMPONENTS_ALL})
+	file(INSTALL ${CPACK_TEMPORARY_DIRECTORY}/${component}/
+		DESTINATION ${CPACK_PACKAGE_DIRECTORY}/Content)
+
+endforeach()
+
+configure_file(@CMAKE_CURRENT_LIST_DIR@/steam/app_build.vdf.in ${CPACK_PACKAGE_DIRECTORY}/app_build.vdf)
+
+configure_file(@CMAKE_CURRENT_LIST_DIR@/steam/depot_build.vdf.in ${CPACK_PACKAGE_DIRECTORY}/depot_build_${Steam_DepotId}.vdf)
+
+configure_file(@CMAKE_CURRENT_LIST_DIR@/steam/upload_build.bat.in ${CPACK_PACKAGE_DIRECTORY}/upload_build.bat)

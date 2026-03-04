@@ -30,7 +30,11 @@ FolderSources(sources "" src)
 FolderSources(sources src Madgine)
 	FolderSources(sources Madgine firstparty steamservices.cpp steamservices.h steamstreambuf.cpp steamstreambuf.h steamstreamdata.cpp steamstreamdata.h steamsyncmanager.cpp steamsyncmanager.h)
 
-add_plugin(SteamServices Madgine FirstParty ${sources} PRECOMPILED_HEADER src/Madgine/steamserviceslib.h ${stub}) 
+if (TARGET Steamworks)
+	set(deps IMPORTED_DEPS Steamworks)
+endif()
+
+add_plugin(SteamServices Madgine FirstParty ${sources} PRECOMPILED_HEADER src/Madgine/steamserviceslib.h ${stub} ${deps}) 
 
 target_link_plugins(SteamServices FirstParty)
 
@@ -40,3 +44,15 @@ endif()
 
 target_compile_definitions(SteamServices PRIVATE STEAM_APP_ID=${Steam_AppId})
 
+
+if (MADGINE_CONFIGURATION)
+	get_target_property(exclude SteamServices EXCLUDE_FROM_ALL)
+	if (NOT exclude)
+		
+		if (NOT Steam_DepotId)
+			MESSAGE(WARNING "Steam packaging script needs 'Steam_DepotId' set to work. Skipping Steam packaging!")
+		else()
+			set_custom_packaging(cmake/cpack/steam.cmake)
+		endif()
+	endif()
+endif()
