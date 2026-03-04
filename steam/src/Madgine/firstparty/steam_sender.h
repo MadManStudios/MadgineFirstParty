@@ -12,9 +12,18 @@ namespace FirstParty {
         {
             mCallResult.Set(mCall, this, &steam_state::callback);
         }
+        void stop()
+        {
+            mCallResult.Cancel();
+            mRec.set_done();
+        }
         void callback(R *result, bool bIOFailure)
         {
-            mRec.set_value(*result);
+            if (bIOFailure) {
+                mRec.set_error(GenericResult::UNKNOWN_ERROR);
+            } else {
+                mRec.set_value(*result);
+            }
         }
         Rec mRec;
         SteamAPICall_t mCall;

@@ -21,6 +21,10 @@ namespace FirstParty {
             },
                 std::move(mArgs));
         }
+        void stop() 
+        {
+            throw 0;
+        }
         static void callback(const R *result)
         {
             eos_state *self = static_cast<eos_state *>(result->ClientData);

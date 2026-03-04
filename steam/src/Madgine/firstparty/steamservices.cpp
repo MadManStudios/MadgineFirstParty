@@ -94,7 +94,10 @@ namespace Engine {
 				co_return{};
 			}
 
-			LeaderboardFindResult_t leaderboard = (co_await steam_sender<LeaderboardFindResult_t>(SteamUserStats()->FindLeaderboard(name))).value();
+			auto leaderboardResult = co_await steam_sender<LeaderboardFindResult_t>(SteamUserStats()->FindLeaderboard(name));
+			if (!leaderboardResult.is_value())
+				co_return{};
+			LeaderboardFindResult_t leaderboard = std::move(leaderboardResult).value();
 			if (!leaderboard.m_bLeaderboardFound)
 				co_return{};
 
