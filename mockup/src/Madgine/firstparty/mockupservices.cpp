@@ -69,6 +69,7 @@ namespace FirstParty {
                 co_await 10ms;
             }
             leaveLobby();
+            leaveMatch();
             mState.update();
             mState.disconnect();
             mLobbyInfo.set(std::nullopt);

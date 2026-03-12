@@ -51,13 +51,13 @@ namespace FirstParty {
         mListenSocket = SteamNetworkingSockets()->CreateListenSocketP2P(0, 0, nullptr);
     }
 
-    void SteamSyncManager::connectImpl(Execution::VirtualReceiverBase<Serialize::SyncManagerResult> &receiver, CSteamID target, Serialize::Format format, TimeOut timeout)
+    Execution::Future<Serialize::SyncManagerResult> SteamSyncManager::connect(CSteamID target, Serialize::Format format, TimeOut timeout)
     {
         SteamNetworkingIdentity identity;
         identity.SetSteamID(target);
         HSteamNetConnection con = SteamNetworkingSockets()->ConnectP2P(identity, 0, 0, nullptr);
 
-        setSlaveStreamImpl(receiver, format, std::make_unique<SteamStreambuf>(con), timeout, std::make_unique<SteamStreamData>(*this, createStreamId(), target));
+        return setSlaveStream(format, std::make_unique<SteamStreambuf>(con), timeout, std::make_unique<SteamStreamData>(*this, createStreamId(), target));
     }
 
     void SteamSyncManager::disconnect()
@@ -71,7 +71,7 @@ namespace FirstParty {
         clearTopLevelItems();
     }
 
-    Execution::SignalStub<> &SteamSyncManager::playersConnected()
+    Execution::SignalStub<void> &SteamSyncManager::playersConnected()
     {
         return mPlayersConnected;
     }

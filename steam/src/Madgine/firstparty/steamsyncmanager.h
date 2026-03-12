@@ -16,12 +16,11 @@ namespace FirstParty {
 
         void listen(size_t count, Serialize::Format format);
 
-        void connectImpl(Execution::VirtualReceiverBase<Serialize::SyncManagerResult> &receiver, CSteamID target, Serialize::Format format, TimeOut timeout = {});
-        ASYNC_STUB(connect, connectImpl, Execution::make_simple_virtual_sender<Serialize::SyncManagerResult>);
+        Execution::Future<Serialize::SyncManagerResult> connect(CSteamID target, Serialize::Format format, TimeOut timeout = {});        
 
         void disconnect();
 
-        Execution::SignalStub<> &playersConnected();
+        Execution::SignalStub<void> &playersConnected();
 
         Serialize::ParticipantId resolvePlayerId(CSteamID id);
 
@@ -35,7 +34,7 @@ namespace FirstParty {
         HSteamListenSocket mListenSocket = k_HSteamListenSocket_Invalid;
 
         size_t mRemainingPlayersToConnect;
-        Execution::Signal<> mPlayersConnected;
+        Execution::Signal<void> mPlayersConnected;
 
         STEAM_CALLBACK(SteamSyncManager, onConnectionUpdate, SteamNetConnectionStatusChangedCallback_t);
 

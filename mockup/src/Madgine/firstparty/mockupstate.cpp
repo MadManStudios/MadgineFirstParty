@@ -47,7 +47,7 @@ namespace Engine {
 
 		MockupState::MockupState()
 		{
-			Execution::sync_expect(mNetwork.addTopLevelItem(this, "State"));
+			mNetwork.addTopLevelItem(this, "State");
 		}
 
 		void MockupState::update()
