@@ -145,7 +145,7 @@ namespace Engine {
 					if (messageNumbers[i] <= 0)
 						switch (-messageNumbers[i]) {
 						case k_EResultNoConnection:
-							result = std::move(STREAM_CONNECTION_LOST_ERROR());
+							result = STREAM_CONNECTION_LOST_ERROR();
 							break;
 						default:
 							throw 0;

@@ -95,13 +95,13 @@ namespace FirstParty {
         SyncManager::removeSlaveStream(reason);
     }
 
-    std::map<Serialize::ParticipantId, Serialize::FormattedMessageStream>::iterator SteamSyncManager::removeMasterStream(std::map<Serialize::ParticipantId, Serialize::FormattedMessageStream>::iterator it, Serialize::SyncManagerResult reason)
+    void SteamSyncManager::removeMasterStream(Serialize::ParticipantId id, Serialize::SyncManagerResult reason)
     {
-        SteamStreamData *data = static_cast<SteamStreamData*>(it->second.data());
+        SteamStreamData *data = static_cast<SteamStreamData*>(getMasterStream(id).data());
 
         mStoredPlayers[data->user()] = data->id();
 
-        return SyncManager::removeMasterStream(it, reason);
+        return SyncManager::removeMasterStream(id, reason);
     }
 
     void SteamSyncManager::onConnectionUpdate(SteamNetConnectionStatusChangedCallback_t *con)
@@ -121,6 +121,9 @@ namespace FirstParty {
                 else
                     id = createStreamId();
 
+                [[maybe_unused]] bool success = SteamNetworkingSockets()->SetConnectionUserData(con->m_hConn, id);
+                assert(success);
+
                 std::unique_ptr<SteamStreamData> data = std::make_unique<SteamStreamData>(*this, id, user);
 
                 Serialize::SyncManagerResult result2 = addMasterStream(mFormat, std::make_unique<SteamStreambuf>(con->m_hConn), std::move(data));
@@ -130,6 +133,23 @@ namespace FirstParty {
             case k_ESteamNetworkingConnectionState_Connected:
                 if (--mRemainingPlayersToConnect == 0)
                     mPlayersConnected.emit();
+                break;
+            case k_ESteamNetworkingConnectionState_ClosedByPeer:
+            case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
+                removeMasterStream(SteamNetworkingSockets()->GetConnectionUserData(con->m_hConn), Serialize::SyncManagerResult::TIMEOUT);
+                break;
+            }
+        }
+        else {
+            switch (con->m_info.m_eState) {
+            case k_ESteamNetworkingConnectionState_Connecting: 
+                break;
+            case k_ESteamNetworkingConnectionState_Connected:
+                break;
+            case k_ESteamNetworkingConnectionState_ClosedByPeer:
+            case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
+                assert(SteamNetworkingSockets()->GetConnectionUserData(con->m_hConn) == -1); //Not a Master Stream
+                removeSlaveStream(Serialize::SyncManagerResult::TIMEOUT);
                 break;
             }
         }

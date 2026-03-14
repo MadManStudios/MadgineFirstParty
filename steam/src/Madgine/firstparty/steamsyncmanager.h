@@ -26,7 +26,7 @@ namespace FirstParty {
 
     protected:
         void removeSlaveStream(Serialize::SyncManagerResult reason = Serialize::SyncManagerResult::UNKNOWN_ERROR) override;
-        std::map<Serialize::ParticipantId, Serialize::FormattedMessageStream>::iterator removeMasterStream(std::map<Serialize::ParticipantId, Serialize::FormattedMessageStream>::iterator it, Serialize::SyncManagerResult reason = Serialize::SyncManagerResult::UNKNOWN_ERROR) override;
+        void removeMasterStream(Serialize::ParticipantId id, Serialize::SyncManagerResult reason = Serialize::SyncManagerResult::UNKNOWN_ERROR) override;
 
     private:
         Serialize::Format mFormat = nullptr;
